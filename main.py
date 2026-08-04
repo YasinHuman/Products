@@ -129,8 +129,7 @@ def createProduct():
     return {"Result": "Data received",
             "Products":[{k: v for k, v in product.items() if k != "is_deleted"} for product in products if not product.get("is_deleted", False)]}, 200
    
-
-@app.route('products', methods=["GET"])
+@app.route('/products', methods=["GET"])
 def readProduct():
     productFilters = request.get_json(silent=True)
     
