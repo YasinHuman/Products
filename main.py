@@ -105,7 +105,7 @@ try:
 except(json.JSONDecodeError):
     products = []
 
-@app.route('products', methods=["POST"])
+@app.route('/products', methods=["POST"])
 def createProduct():
     global products
     data = request.get_json(silent=True)
@@ -144,11 +144,47 @@ def readProduct():
 
 @app.route('products', methods=["PUT"])
 def updateProduct():
-    pass
+    global products
+    data = request.get_json(silent=True)
+
+    if checkProductParams(data, True) != "Valid":
+        return checkProductParams(data, True)
+
+    productId = data.get("id")
+
+    for product in products:
+        if product["id"] == productId and not product["is_deleted"]:
+            product.update({
+                "title": data["title"],
+                "description": data["description"],
+                "price": data["price"],
+                "category_id": data["category_id"]
+            })
+            with open(PRODUCTS_PATH, 'w') as file:
+                json.dump(products, file, indent=3)
+            return {"Result": "Product updated",
+                    "Products":[{k: v for k, v in product.items() if k != "is_deleted"} for product in products if not product.get("is_deleted", False)]}, 200
+
+    return "Product not found", 404
 
 @app.route('products', methods=["DELETE"])
 def deleteProduct():
-    pass
+    global products
+    data = request.get_json(silent=True)
+
+    if type(data) != dict or "id" not in data:
+        return "Product ID is required for deletion", 400
+
+    productId = data["id"]
+    for product in products:
+        if product["id"] == productId and not product["is_deleted"]:
+            product["is_deleted"] = True
+            with open(PRODUCTS_PATH, 'w') as file:
+                json.dump(products, file, indent=3)
+            return {"Result": "Product deleted",
+                    "Products":[{k: v for k, v in product.items() if k != "is_deleted"} for product in products if not product.get("is_deleted", False)]}, 200
+
+    return "Product not found", 404
 
 if __name__ == '__main__':
     app.run(debug=True, port=9000)
