@@ -1,0 +1,32 @@
+[
+   {
+      "id": 1,
+      "title": "Electronics",
+      "description": "lorem ipsum",
+      "is_deleted": false
+   },
+   {
+      "id": 2,
+      "title": "Drinks",
+      "description": "lorem ipsum",
+      "is_deleted": false
+   },
+   {
+      "id": 3,
+      "title": "Skincare",
+      "description": "lorem ipsum",
+      "is_deleted": false
+   },
+   {
+      "id": 4,
+      "title": "Car decorations",
+      "description": "lorem ipsum",
+      "is_deleted": true
+   },
+   {
+      "id": 5,
+      "title": "Home decorations",
+      "description": "lorem ipsum",
+      "is_deleted": false
+   }
+]

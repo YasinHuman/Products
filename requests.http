@@ -1,0 +1,36 @@
+POST http://127.0.0.1:9000/categories
+Content-Type: application/json
+
+{
+    "title":"Home decorations",
+    "description":"lorem ipsum"
+}
+
+###
+
+GET http://127.0.0.1:9000/categories
+Content-Type: application/json
+
+{
+    "title": "drinks"
+}
+
+###
+
+PUT http://127.0.0.1:9000/categories
+Content-Type: application/json
+
+{
+    "id":5,
+    "title": "Home decorations",
+    "description":"lorem ipsum"
+}
+
+###
+
+DELETE http://127.0.0.1:9000/categories
+Content-Type: application/json
+
+{
+    "id": 4
+}
