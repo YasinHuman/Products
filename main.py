@@ -6,13 +6,22 @@ app = Flask(__name__)
 
 # CATEGORIES
 
-CATEGORIES_PATH = '.\data\categories.json'
+CATEGORIES_PATH = './data/categories.json'
 
 try:
     with open(CATEGORIES_PATH, 'r') as file:
         categories = json.load(file)
 except(json.JSONDecodeError):
     categories = []
+
+PRODUCTS_PATH = './data/products.json'
+
+try:
+    with open(PRODUCTS_PATH, 'r') as file:
+        products = json.load(file)
+except(json.JSONDecodeError):
+    products = []
+
 
 @app.route('/categories', methods=["POST"])
 def createCategory():
@@ -51,6 +60,7 @@ def readCategory():
 
     return categoryFilter(categoryFilters, categories)
 
+
 @app.route('/categories', methods=["PUT"])
 def updateCategory():
     global categories
@@ -84,6 +94,10 @@ def deleteCategory():
         return "Category ID is required for deletion", 400
 
     categoryId = data["id"]
+    
+    if checkProductsForDelete(categoryId, products) != "Valid":
+        return "Products are assigned to this category. Either change their category or delete them to delete this category.", 400
+    
     for category in categories:
         if category["id"] == categoryId and not category["is_deleted"]:
             category["is_deleted"] = True
@@ -97,14 +111,6 @@ def deleteCategory():
 
 # PRODUCTS
 
-PRODUCTS_PATH = '.\data\products.json'
-
-try:
-    with open(PRODUCTS_PATH, 'r') as file:
-        products = json.load(file)
-except(json.JSONDecodeError):
-    products = []
-
 @app.route('/products', methods=["POST"])
 def createProduct():
     global products
@@ -112,6 +118,9 @@ def createProduct():
 
     if checkProductParams(data, False) != "Valid":
         return checkProductParams(data, False)
+
+    if checkForCategory(categories, data) != "Valid":
+        return "Category doesn't exist", 400
 
     productId = 1
     if products:
@@ -128,6 +137,7 @@ def createProduct():
 
     return {"Result": "Data received",
             "Products":[{k: v for k, v in product.items() if k != "is_deleted"} for product in products if not product.get("is_deleted", False)]}, 200
+
    
 @app.route('/products', methods=["GET"])
 def readProduct():
@@ -141,7 +151,8 @@ def readProduct():
 
     return productFilter(productFilters, products)
 
-@app.route('products', methods=["PUT"])
+
+@app.route('/products', methods=["PUT"])
 def updateProduct():
     global products
     data = request.get_json(silent=True)
@@ -166,7 +177,8 @@ def updateProduct():
 
     return "Product not found", 404
 
-@app.route('products', methods=["DELETE"])
+
+@app.route('/products', methods=["DELETE"])
 def deleteProduct():
     global products
     data = request.get_json(silent=True)
@@ -185,5 +197,6 @@ def deleteProduct():
 
     return "Product not found", 404
 
+
 if __name__ == '__main__':
-    app.run(debug=True, port=9000)
+    app.run(debug=True, port=5000)

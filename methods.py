@@ -63,8 +63,8 @@ def checkProductParams(data, isPut):
     if data["price"] == "":
          return "A price is needed", 400
 
-    if data["quantity"] == "":
-         return "A quantity is needed", 400
+    if data["categoryId"] == "":
+         return "A categoryId is needed", 400
 
     if isPut:
         if data["id"] == "":
@@ -104,4 +104,17 @@ def productFilter(filters, products):
         if matches and not product["is_deleted"]:
             filterResults.append(product)
     return [{k: v for k, v in filterResult.items() if k != "is_deleted"} for filterResult in filterResults], 200
+
+def checkProductsForDelete(categoryId, products):
+    for product in products:
+         if product["categoryId"] == categoryId and not product["is_deleted"]:
+              return "Invalid"
+    return "Valid"
+
+
+def checkForCategory(categories, data):
+    for category in categories:
+        if str(data["categoryId"]) == str(category["categoryId"]):
+             return "Valid"
+        return "Invalid"
 
