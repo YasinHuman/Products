@@ -1,0 +1,33 @@
+POST http://127.0.0.1:5000/uploads/
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="image.jpeg"
+Content-Type: image/jpeg
+
+< ./download.jpg
+--boundary--
+
+###
+
+PUT http://127.0.0.1:5000/uploads/
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="file"; filename=".jpeg"
+Content-Type: image/jpeg
+
+< ./download.jpg
+--boundary--
+
+--boundary
+Content-Disposition: form-data; name="changes";
+Content-Type: application/json
+
+{
+"id":2,
+"filename":"picture.jpeg"
+}
+
+< ./download.jpg
+--boundary--
