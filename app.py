@@ -1,7 +1,7 @@
 from flask import Flask
-from categories.routes import categories_bp
-from products.routes import products_bp
-from uploads.routes import uploads_bp
+from _categories.routes import categories_bp
+from _products.routes import products_bp
+from _uploads.routes import uploads_bp
 
 app = Flask(__name__)
 
