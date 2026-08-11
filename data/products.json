@@ -1,0 +1,11 @@
+[
+   {
+      "id": 1,
+      "title": "Cola",
+      "description": "Soda",
+      "price": 1.5,
+      "categoryId": 2,
+      "imageId": 1,
+      "is_deleted": false
+   }
+]

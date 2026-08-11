@@ -1,0 +1,14 @@
+GET http://127.0.0.1:5000/products/1
+
+###
+
+POST http://127.0.0.1:5000/products
+Content-Type: application/json
+
+{
+    "title": "Cola",
+    "description": "Soda",
+    "price": 1.50,
+    "categoryId": 2,
+    "imageId": 1
+}

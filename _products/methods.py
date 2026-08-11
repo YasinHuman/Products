@@ -1,41 +1,36 @@
 import json
 
-def productFilter(filters, products):
-    filterResults = []
-    if not filters:
-        return [{k: v for k, v in product.items() if k != "is_deleted"} for product in products if not product.get("is_deleted", False)], 200
-    
+def productFilter(filters, products, categories):
+    filterResults = []  
     if not all(filter_ in ["title", "description", "id", "price", "categoryId", "imageId"] for filter_ in filters):
                 return "Wrong filter keys", 400
+    
     for product in products:
-        matches = True
+        if product["is_deleted"]:
+            continue
+        
+        if "title" in filters and filters["title"].lower() not in product["title"].lower():
+            continue
 
-        if str(filters["title"]).lower() not in str(product["title"]).lower():
-            matches = False
-            break
+        if "description" in filters and filters["description"].lower() not in product["description"].lower():
+            continue
 
-        if str(filters["description"]).lower() not in str(product["description"]).lower():
-            matches = False
-            break
+        if "id" in filters and int(filters["id"]) != int(product["id"]):
+            continue    
 
-        if str(filters["id"]).lower() not in str(product["id"]).lower():
-            matches = False
-            break
+        if "price" in filters and float(filters["price"]) != float(product["price"]):
+            continue
 
-        if str(filters["price"]).lower() not in str(product["price"]).lower():
-            matches = False
-            break
+        if "categoryId" in filters and int(filters["categoryId"]) != int(product["categoryId"]):
+            continue
 
-        if str(filters["categoryId"]).lower() not in str(product["categoryId"]).lower():
-            matches = False
-            break
+        if "imageId" in filters and int(filters["imageId"]) != int(product["imageId"]):
+            continue
 
-        if str(filters["imageId"]).lower() not in str(product["imageId"]).lower():
-                matches = False
-                break
-
-        if matches and not product["is_deleted"]:
-            filterResults.append(product)
+        categoryName = categories[int(product.get("categoryId"))-1].get("title")
+        product["categoryName"] = categoryName
+        
+        filterResults.append(product)
     return [{k: v for k, v in filterResult.items() if k != "is_deleted"} for filterResult in filterResults], 200
 
 def saveProductData(data, products, PRODUCTS_PATH):

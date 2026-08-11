@@ -37,8 +37,5 @@ def deleteFile(data, uploads, dataPath, uploadFolder):
     for upload in uploads:
         if data["id"] == upload["id"]:
             upload["is_deleted"] = True
-            # path = os.path.join(uploadFolder, upload["codeName"])
-            # if os.path.exists(path):
-            #     os.remove(path)
     with open(dataPath, 'w') as file:
         json.dump(uploads, file, indent=3)

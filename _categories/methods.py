@@ -1,27 +1,31 @@
 import json
 from .validators import checkProductsForDelete
 
-def categoryFilter(filters, categories):
+def categoryFilter(filters, categories, products):
     filterResults = []
     if not all(filter_ in ["title", "description", "id"] for filter_ in filters):
                 return {"error": "Wrong filter keys"}, 400
+    
     for category in categories:
-        matches = True
+        if category["is_deleted"]:
+            continue
 
-        if str(filters["title"]).lower() not in str(category["title"]).lower():
-            matches = False
-            break
+        if "title" in filters and filters["title"] not in category["title"]:
+            continue
 
-        if str(filters["description"]).lower() not in str(category["description"]).lower():
-            matches = False
-            break
+        if "description" in filters and filters["description"] not in category["description"]:
+            continue
 
-        if str(filters["id"]).lower() not in str(category["id"]).lower():
-            matches = False
-            break
+        if "id" in filters and int(filters["id"]) != int(category["id"]):
+            continue
 
-        if matches and not category["is_deleted"]:
-            filterResults.append(category)
+        childProducts = []
+        for product in products:
+            if int(product.get("categoryId")) == category.get('id') and not product.get("is_deleted"):
+                childProducts.append({k: v for k, v in product.items() if k not in ["is_deleted", "categoryId"]})
+        category["products"] = childProducts
+
+        filterResults.append(category)        
     return [{k: v for k, v in filterResult.items() if k != "is_deleted"} for filterResult in filterResults], 200
 
 def saveCategoryData(data, categories, CATEGORIES_PATH):

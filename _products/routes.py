@@ -56,7 +56,7 @@ def readProduct():
     if type(productFilters) != dict:
             return "Filters should be a dictionary", 400
 
-    return productFilter(filters=productFilters, products=products)
+    return productFilter(filters=productFilters, products=products, categories=categories)
 
 
 @products_bp.route('/', methods=["PUT"])
@@ -81,3 +81,8 @@ def deleteProduct():
         return "Product ID is required for deletion, and it must be submitted in a json file", 400
 
     return deleteProductData(data=data,products=products,PRODUCTS_PATH=PRODUCTS_PATH)
+
+
+@products_bp.route('/<int:id>')
+def getProductById(id):
+    return productFilter(filters={"id":id}, products=products, categories=categories)

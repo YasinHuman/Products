@@ -43,7 +43,7 @@ def readCategory():
     if type(categoryFilters) != dict:
             return {"error": "Filters should be a dictionary"}, 400
 
-    return categoryFilter(filters=categoryFilters, categories=categories)
+    return categoryFilter(filters=categoryFilters, categories=categories, products=products)
 
 
 @categories_bp.route('/', methods=["PUT"])
@@ -69,3 +69,7 @@ def deleteCategory():
 
     return deleteCategoryData(data=data, categories=categories, products=products, CATEGORIES_PATH=CATEGORIES_PATH)
 
+
+@categories_bp.route('/<int:id>')
+def getCategoryById(id):
+    return categoryFilter(filters={"id":id}, categories=categories, products=products)
