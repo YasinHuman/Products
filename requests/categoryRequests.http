@@ -10,6 +10,7 @@ Content-Type: application/json
 
 GET http://127.0.0.1:5000/categories
 Content-Type: application/json
+x-user-id: 1001
 
 {
     "title": "drinks"
@@ -38,4 +39,4 @@ Content-Type: application/json
 
 ###
 
-GET http://127.0.0.1:5000/categories/2
+GET http://127.0.0.1:5000/categories/1

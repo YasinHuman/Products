@@ -10,10 +10,10 @@ def categoryFilter(filters, categories, products):
         if category["is_deleted"]:
             continue
 
-        if "title" in filters and filters["title"] not in category["title"]:
+        if "title" in filters and filters["title"].lower() not in category["title"].lower():
             continue
 
-        if "description" in filters and filters["description"] not in category["description"]:
+        if "description" in filters and filters["description"].lower() not in category["description"].lower():
             continue
 
         if "id" in filters and int(filters["id"]) != int(category["id"]):
