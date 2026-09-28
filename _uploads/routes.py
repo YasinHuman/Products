@@ -1,4 +1,4 @@
-from flask import Blueprint, current_app, request
+from flask import Blueprint, request
 from .methods import *
 import json
 from .validators import *
@@ -13,9 +13,6 @@ try:
 except(FileNotFoundError, json.JSONDecodeError):
     uploadsData = []
 
-userId = current_app.config.get('userId')
-is_admin = current_app.config.get('is_admin')
-
 @uploads_bp.route('/', methods=["POST"])
 def createUpload():
     global uploadsData
@@ -28,7 +25,7 @@ def createUpload():
     
     data = assignData(file.filename, uploadsData)
     
-    error = saveFile(data=data, dataFolder=UPLOADS_DATA_PATH, uploadFolder=UPLOADS_IMAGE_PATH, file=file, uploads=uploadsData)
+    error = saveFile(data=data, file=file, uploads=uploadsData)
     if error:
         return error
     
@@ -50,7 +47,7 @@ def updateUpload():
     if error:
         return error
 
-    changeData(data, uploadsData, UPLOADS_DATA_PATH)
+    changeData(data=data, uploads=uploadsData)
 
     return "Data changed", 200
     
@@ -60,6 +57,6 @@ def updateUpload():
 def deleteUpload():
     global uploadsData
     data = request.get_json()["changes"]
-    deleteFile(data, uploadsData, UPLOADS_DATA_PATH, UPLOADS_IMAGE_PATH)
+    deleteFile(data=data, uploads=uploadsData)
 
     return "File has been deleted", 200

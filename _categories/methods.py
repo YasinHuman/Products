@@ -1,7 +1,12 @@
 import json
 from .validators import checkProductsForDelete
+from flask import g
 
-def categoryFilter(filters, categories, products, userId, is_admin):
+CATEGORIES_PATH = 'data/categories.json'
+
+def categoryFilter(filters, categories, products):
+    userId = g.get('userId')
+    is_admin = g.get('is_admin')
     filterResults = []
     if not all(filter_ in ["title", "description", "id"] for filter_ in filters):
                 return {"error": "Wrong filter keys"}, 400
@@ -31,14 +36,17 @@ def categoryFilter(filters, categories, products, userId, is_admin):
         filterResults.append(category)        
     return [{k: v for k, v in filterResult.items() if k != "is_deleted"} for filterResult in filterResults], 200
 
-def saveCategoryData(data, categories, CATEGORIES_PATH):
-    categoryId = 1
+def saveCategoryData(data, categories):
+    userId = g.get('userId')
     if categories:
         categoryId = len(categories)+1
+    else:
+        categoryId = 1
     data = {
         "id":categoryId,
         **data,
-        "is_deleted":False
+        "is_deleted":False,
+        "created_by":userId
     }
 
     categories.append(data)
@@ -47,11 +55,15 @@ def saveCategoryData(data, categories, CATEGORIES_PATH):
 
     return categories
 
-def updateCategoryData(data, categories, CATEGORIES_PATH):
+def updateCategoryData(data, categories):
     categoryId = data.get("id")
+    userId = g.get('userId')
+    is_admin = g.get('is_admin')
 
     for category in categories:
         if category["id"] == categoryId and not category["is_deleted"]:
+            if not is_admin and category.get("created_by") != userId:
+                return {"error": "Permission denied"}, 403
             for key, value in data.items():
                 if key in ["title", "description"]:
                     category[key] = value
@@ -62,16 +74,19 @@ def updateCategoryData(data, categories, CATEGORIES_PATH):
 
     return {"error": "Category not found"}, 404
 
-def deleteCategoryData(data, products, categories, CATEGORIES_PATH):
+def deleteCategoryData(data, products, categories):
+    userId = g.get('userId')
+    is_admin = g.get('is_admin')
     categoryId = data["id"]
-    error = None
-
+    
     error = checkProductsForDelete(categoryId, products)
     if error:
         return error
 
     for category in categories:
         if category["id"] == categoryId and not category["is_deleted"]:
+            if not is_admin and category.get("created_by") != userId:
+                return {"error": "Permission denied"}, 403
             category["is_deleted"] = True
             with open(CATEGORIES_PATH, 'w') as file:
                 json.dump(categories, file, indent=3)

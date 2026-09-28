@@ -1,6 +1,11 @@
 import json
+from flask import g
 
-def productFilter(filters, products, categories, userId, is_admin):
+PRODUCTS_PATH = 'data/products.json'
+
+def productFilter(filters, products, categories):
+    userId = g.get('userId')
+    is_admin = g.get('is_admin')
     filterResults = []  
     if not all(filter_ in ["title", "description", "id", "price", "categoryId", "imageId"] for filter_ in filters):
                 return "Wrong filter keys", 400
@@ -36,8 +41,9 @@ def productFilter(filters, products, categories, userId, is_admin):
         filterResults.append(product)
     return [{k: v for k, v in filterResult.items() if k != "is_deleted"} for filterResult in filterResults], 200
 
-def saveProductData(data, products, PRODUCTS_PATH, userId):
+def saveProductData(data, products):
     productId = 1
+    userId = g.get('userId')
     if products:
         productId = len(products)+1
     data = {
@@ -53,8 +59,10 @@ def saveProductData(data, products, PRODUCTS_PATH, userId):
     return products
 
 
-def updateProductData(products, data, PRODUCTS_PATH, userId, is_admin):
+def updateProductData(products, data):
     productId = data.get("id")
+    userId = g.get('userId')
+    is_admin = g.get('is_admin')
     for product in products:
             if product["id"] == productId and not product["is_deleted"]:
                 if not is_admin and product.get("created_by") != userId:
@@ -68,7 +76,9 @@ def updateProductData(products, data, PRODUCTS_PATH, userId, is_admin):
     return {"error": "Product not found"}, 404
 
 
-def deleteProductData(data, products, PRODUCTS_PATH, userId, is_admin):
+def deleteProductData(data, products):
+    userId = g.get('userId')
+    is_admin = g.get('is_admin')
     productId = data["id"]
     for product in products:
         if product["id"] == productId and not product["is_deleted"]:

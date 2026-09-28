@@ -20,8 +20,6 @@ try:
 except(json.JSONDecodeError):
     products = []
 
-userId = current_app.config.get('userId')
-is_admin = current_app.config.get('is_admin')
 
 @categories_bp.route('/', methods=["POST"])
 def createCategory():
@@ -33,7 +31,7 @@ def createCategory():
     if error:
         return error
 
-    categories = saveCategoryData(data=data, categories=categories, CATEGORIES_PATH=CATEGORIES_PATH) # Saves data and updates it for later use
+    categories = saveCategoryData(data=data, categories=categories)
 
     return {"Result": "Data received",
             "Categories":[{k: v for k, v in category.items() if k != "is_deleted"} for category in categories if not category.get("is_deleted", False)]}, 200
@@ -59,7 +57,7 @@ def updateCategory():
     if error:
         return error
 
-    return updateCategoryData(data=data, categories=categories, CATEGORIES_PATH=CATEGORIES_PATH)
+    return updateCategoryData(data=data, categories=categories)
     
 
 @categories_bp.route('/', methods=["DELETE"])
@@ -70,7 +68,7 @@ def deleteCategory():
     if type(data) != dict or "id" not in data:
         return "Category ID is required for deletion", 400
 
-    return deleteCategoryData(data=data, categories=categories, products=products, CATEGORIES_PATH=CATEGORIES_PATH)
+    return deleteCategoryData(data=data, categories=categories, products=products)
 
 
 @categories_bp.route('/<int:id>')

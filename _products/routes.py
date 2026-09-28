@@ -25,14 +25,10 @@ try:
 except(json.JSONDecodeError):
     uploadsData = []
 
-userId = current_app.config.get('userId')
-is_admin = current_app.config.get('is_admin')
-
 @products_bp.route('/', methods=["POST"])
 def createProduct():
     global products
     data = request.get_json(silent=True)
-    error = None
 
     error = checkProductParams(data=data, isPut=False)
     if error:
@@ -46,33 +42,32 @@ def createProduct():
     if error:
         return error
 
-    products = saveProductData(data=data, products=products, PRODUCTS_PATH=PRODUCTS_PATH, userId=userId) # Saves data but also updates it for later use
+    products = saveProductData(data=data, products=products)
 
     return {"Result": "Data received",
             "Products":[{k: v for k, v in product.items() if k != "is_deleted"} for product in products if not product.get("is_deleted", False)]}, 200
 
    
 @products_bp.route('/', methods=["GET"])
-def readProduct():
+def readProduct(): 
     productFilters = request.get_json(silent=True)
     
     if type(productFilters) != dict:
             return "Filters should be a dictionary", 400
 
-    return productFilter(filters=productFilters, products=products, categories=categories, userId=userId, is_admin=is_admin)
+    return productFilter(filters=productFilters, products=products, categories=categories)
 
 
 @products_bp.route('/', methods=["PUT"])
 def updateProduct():
     global products
     data = request.get_json(silent=True)
-    error = None
 
     error = checkProductParams(data=data, isPut=True)
     if error:
         return error
 
-    return updateProductData(products=products, data=data, PRODUCTS_PATH=PRODUCTS_PATH, userId=userId, is_admin=is_admin)
+    return updateProductData(products=products, data=data)
 
 
 @products_bp.route('/', methods=["DELETE"])
@@ -83,9 +78,9 @@ def deleteProduct():
     if type(data) != dict or "id" not in data:
         return "Product ID is required for deletion, and it must be submitted in a json file", 400
 
-    return deleteProductData(data=data,products=products,PRODUCTS_PATH=PRODUCTS_PATH, userId=userId, is_admin=is_admin)
+    return deleteProductData(data=data,products=products)
 
 
 @products_bp.route('/<int:id>')
 def getProductById(id):
-    return productFilter(filters={"id":id}, products=products, categories=categories, userId=userId, is_admin=is_admin)
+    return productFilter(filters={"id":id}, products=products, categories=categories)

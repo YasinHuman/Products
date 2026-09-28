@@ -2,6 +2,8 @@
 {
 "id":1001,
 "username":"Yasin",
-"password":123456
+"password":123456,
+"is_deleted":false,
+"is_admin": true
 }
 ]
