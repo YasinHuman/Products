@@ -1,13 +1,16 @@
 import json
 from .validators import checkProductsForDelete
 
-def categoryFilter(filters, categories, products):
+def categoryFilter(filters, categories, products, userId, is_admin):
     filterResults = []
     if not all(filter_ in ["title", "description", "id"] for filter_ in filters):
                 return {"error": "Wrong filter keys"}, 400
     
     for category in categories:
         if category["is_deleted"]:
+            continue
+
+        if not is_admin and category.get("created_by") != userId:
             continue
 
         if "title" in filters and filters["title"].lower() not in category["title"].lower():

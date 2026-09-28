@@ -2,7 +2,7 @@ import os
 from uuid import *
 import json
 
-def assignData(filename, uploads):
+def assignData(filename, uploads, userId):
     fileId = max((upload["id"] for upload in uploads), default=0) + 1
     extension = str(filename).rsplit(".", maxsplit=1)[1].lower()
     codeName = uuid4().hex
@@ -11,7 +11,8 @@ def assignData(filename, uploads):
         "id": fileId,
         "originalName":filename,
         "codeName":f"{codeName}.{extension}",
-        "is_deleted": False
+        "is_deleted": False,
+        "created_by": userId
         }
     return data
 

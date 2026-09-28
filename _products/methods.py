@@ -1,12 +1,15 @@
 import json
 
-def productFilter(filters, products, categories):
+def productFilter(filters, products, categories, userId, is_admin):
     filterResults = []  
     if not all(filter_ in ["title", "description", "id", "price", "categoryId", "imageId"] for filter_ in filters):
                 return "Wrong filter keys", 400
     
     for product in products:
         if product["is_deleted"]:
+            continue
+
+        if not is_admin and product.get("created_by") != userId:
             continue
         
         if "title" in filters and filters["title"].lower() not in product["title"].lower():
@@ -33,14 +36,15 @@ def productFilter(filters, products, categories):
         filterResults.append(product)
     return [{k: v for k, v in filterResult.items() if k != "is_deleted"} for filterResult in filterResults], 200
 
-def saveProductData(data, products, PRODUCTS_PATH):
+def saveProductData(data, products, PRODUCTS_PATH, userId):
     productId = 1
     if products:
         productId = len(products)+1
     data = {
         "id":productId,
         **data,
-        "is_deleted":False
+        "is_deleted":False,
+        "created_by": userId
     }
     products.append(data)
     with open(PRODUCTS_PATH, 'w') as file:
@@ -49,10 +53,12 @@ def saveProductData(data, products, PRODUCTS_PATH):
     return products
 
 
-def updateProductData(products, data, PRODUCTS_PATH):
+def updateProductData(products, data, PRODUCTS_PATH, userId, is_admin):
     productId = data.get("id")
     for product in products:
             if product["id"] == productId and not product["is_deleted"]:
+                if not is_admin and product.get("created_by") != userId:
+                    return {"error": "You are not authorized to update this product"}, 403
                 for key, value in data.items():
                     product[key] = value
                 with open(PRODUCTS_PATH, 'w') as file:
@@ -62,10 +68,12 @@ def updateProductData(products, data, PRODUCTS_PATH):
     return {"error": "Product not found"}, 404
 
 
-def deleteProductData(data, products, PRODUCTS_PATH):
+def deleteProductData(data, products, PRODUCTS_PATH, userId, is_admin):
     productId = data["id"]
     for product in products:
         if product["id"] == productId and not product["is_deleted"]:
+            if not is_admin and product.get("created_by") != userId:
+                return {"error": "You are not authorized to delete this product"}, 403
             product["is_deleted"] = True
             with open(PRODUCTS_PATH, 'w') as file:
                 json.dump(products, file, indent=3)

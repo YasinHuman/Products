@@ -3,30 +3,40 @@
       "id": 1,
       "title": "Electronics",
       "description": "lorem ipsum",
-      "is_deleted": false
+      "is_deleted": false,
+      "created_by": 1001,
+      "created_at": "2024-06-10T12:00:00Z"
    },
    {
       "id": 2,
       "title": "Drinks",
       "description": "lorem ipsum",
-      "is_deleted": false
+      "is_deleted": false,
+      "created_by": 1001,
+      "created_at": "2024-06-10T12:05:00Z"
    },
    {
       "id": 3,
       "title": "Skincare",
       "description": "lorem ipsum",
-      "is_deleted": false
+      "is_deleted": false,
+      "created_by": 1001,
+      "created_at": "2024-06-10T12:10:00Z"
    },
    {
       "id": 4,
       "title": "Car decorations",
       "description": "lorem ipsum",
-      "is_deleted": true
+      "is_deleted": true,
+      "created_by": 1001,
+      "created_at": "2024-06-10T12:15:00Z"
    },
    {
       "id": 5,
       "title": "Home decorations",
       "description": "lorem ipsum",
-      "is_deleted": false
+      "is_deleted": false,
+      "created_by": 1001,
+      "created_at": "2024-06-10T12:20:00Z"
    }
 ]

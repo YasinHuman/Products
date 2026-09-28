@@ -3,6 +3,8 @@
       "id": 1,
       "originalName": "image.jpeg",
       "codeName": "597680fee4ed4f44b553702de4ce103e.jpeg",
-      "is_deleted": false
+      "is_deleted": false,
+      "created_by": 1001,
+      "created_at": "2024-06-10T12:25:00Z"
    }
 ]

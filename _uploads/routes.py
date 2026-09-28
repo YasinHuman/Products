@@ -1,4 +1,4 @@
-from flask import Blueprint, request
+from flask import Blueprint, current_app, request
 from .methods import *
 import json
 from .validators import *
@@ -12,6 +12,9 @@ try:
         uploadsData = json.load(file)
 except(FileNotFoundError, json.JSONDecodeError):
     uploadsData = []
+
+userId = current_app.config.get('userId')
+is_admin = current_app.config.get('is_admin')
 
 @uploads_bp.route('/', methods=["POST"])
 def createUpload():

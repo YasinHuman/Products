@@ -10,18 +10,38 @@ ACCOUNTS_PATH = 'data/accounts.json'
 
 try:
     with open(ACCOUNTS_PATH, 'r') as file:
-        account = json.load(file)
+        accounts = json.load(file)
 except(json.JSONDecodeError):
     accounts = []
+
+try:
+    with open('data/adminsIds.json', 'r') as file:
+        admins_ids = json.load(file)
+except(json.JSONDecodeError):
+    admins_ids = []
 
 
 @app.before_request
 def check_header():
-    id = request.headers.get("X-user-id")
+    username = request.headers.get("X-user-username")
+    if not username:
+        return json.jsonify({"error": "Missing X-user-username header"}), 400
+    password = request.headers.get("X-user-password")
+    if not password:
+        return json.jsonify({"error": "Missing X-user-password header"}), 400
 
-    ids = [account.get("id") for account in accounts if not account.get("is_deleted", False)]
-    if id not in ids:
-        return {"error": "Invalid API key"}, 400
+    for account in accounts:
+        if not account["username"] == username and not account["password"] == password:
+            return json.jsonify({"error": "Invalid username or password"}), 401
+        if account["username"] == username and account["password"] == password:
+            userId = account["id"]
+
+    app.config['userId'] = userId
+
+    if userId in admins_ids:
+        app.config['is_admin'] = True
+    else:
+        app.config['is_admin'] = False
 
 app.register_blueprint(
     categories_bp,

@@ -1,4 +1,4 @@
-from flask import Blueprint, request
+from flask import Blueprint, request, current_app
 from .methods import *
 from .validators import *
 import json
@@ -19,6 +19,9 @@ try:
         products = json.load(file)
 except(json.JSONDecodeError):
     products = []
+
+userId = current_app.config.get('userId')
+is_admin = current_app.config.get('is_admin')
 
 @categories_bp.route('/', methods=["POST"])
 def createCategory():
