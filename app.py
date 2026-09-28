@@ -17,15 +17,12 @@ except(json.JSONDecodeError):
     accounts = []
 
 
-
-# @app.before_request
-# def check_header():
-#     ...
-
-# CHANGE LATER
-g.is_admin = True
-g.userId = 1001
-#
+### CHANGE LATER
+@app.before_request
+def check_user():
+    g.is_admin = True
+    g.userId = 1001
+###
 
 
 app.register_blueprint(

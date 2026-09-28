@@ -15,7 +15,7 @@ except(json.JSONDecodeError):
 
 @register_bp.route('/', methods=["POST"])
 def registerAccount():
-    data = request.json.get(silent=True)
+    data = request.get_json()
 
     error = checkRegisterParams(data=data, accounts=accounts)
     if error:

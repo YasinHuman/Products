@@ -18,4 +18,6 @@ def saveAccount(data, accounts):
     accounts.append(accountData)
     with open(ACCOUNTS_PATH, 'w') as file:
             json.dump(accounts, file, indent=3)
+            
+    return {"message": "account created successfully"}, 201
         
