@@ -13,7 +13,9 @@ def saveAccount(data, accounts):
         "full name":data["full name"],
         "password":data["password"],
         "is_deleted":False,
-        "is_admin":False    
+        "is_admin":False,
+        "token":None,
+        "token_expiration":None 
     }
     accounts.append(accountData)
     with open(ACCOUNTS_PATH, 'w') as file:

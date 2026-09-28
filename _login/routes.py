@@ -1,4 +1,4 @@
-from flask import Blueprint, current_app, request
+from flask import Blueprint, g, request
 from .methods import *
 import json
 from .validators import *
@@ -12,3 +12,14 @@ try:
         accounts = json.load(file)
 except(json.JSONDecodeError):
     accounts = []
+
+@login_bp.route('/', methods=['POST'])
+def login():
+    data = request.get_json()
+
+    error, userId = validateLoginData(data=data, accounts=accounts)
+    if error:
+        return error
+
+    return generateToken(userId=userId, accounts=accounts)
+    

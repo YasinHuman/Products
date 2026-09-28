@@ -5,7 +5,9 @@
       "full name": "Yasin Gadirbayli",
       "password": 123456,
       "is_deleted": false,
-      "is_admin": true
+      "is_admin": true,
+      "token": null,
+      "token_expiration": null
    },
    {
       "id": 1002,
@@ -13,6 +15,8 @@
       "full name": "Test User",
       "password": "123456",
       "is_deleted": false,
-      "is_admin": false
+      "is_admin": false,
+      "token": "620ebd3c-bf01-47c8-9f68-5b84494211f5-c345d640-e891-4f81-b472-0b1eae6f1b6c",
+      "token_expiration": "2026-09-28T12:48:11.223813"
    }
 ]
