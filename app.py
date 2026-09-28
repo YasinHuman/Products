@@ -22,15 +22,26 @@ except(json.JSONDecodeError):
 @app.before_request
 def check_user():
     token = request.headers.get('Token')
-    for account in accounts:
-        if account.get("token") == token:
-            token_expiration = datetime.fromisoformat(account.get("token_expiration"))
-            if datetime.utcnow() < token_expiration:
-                g.is_admin = account.get("is_admin", False)
-                g.userId = account.get("id")
-                return
+    if request.endpoint in ["login", "register"]:
+        return
+
+    token = request.headers.get("Token")
+
     g.is_admin = False
     g.userId = None
+
+    for account in accounts:
+        if account.get("token") == token:
+            expiration = account.get("token_expiration")
+
+            if expiration:
+                token_expiration = datetime.fromisoformat(expiration)
+
+                if datetime.utcnow() < token_expiration:
+                    g.is_admin = account.get("is_admin", False)
+                    g.userId = account.get("id")
+
+            return
 ###
 
 

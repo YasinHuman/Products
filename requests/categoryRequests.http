@@ -10,10 +10,10 @@ Content-Type: application/json
 
 GET http://127.0.0.1:5000/categories
 Content-Type: application/json
-x-user-id: 1001
+Token: 7382c082-9b25-4fdc-9efe-8a94eab6bad7-0c647709-a2ea-41b4-ba31-1c5dc7c4fe6a
 
 {
-    "title": "drinks"
+    
 }
 
 ###

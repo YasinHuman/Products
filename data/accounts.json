@@ -3,11 +3,11 @@
       "id": 1001,
       "username": "Yasin",
       "full name": "Yasin Gadirbayli",
-      "password": 123456,
+      "password": "123456",
       "is_deleted": false,
       "is_admin": true,
-      "token": null,
-      "token_expiration": null
+      "token": "7382c082-9b25-4fdc-9efe-8a94eab6bad7-0c647709-a2ea-41b4-ba31-1c5dc7c4fe6a",
+      "token_expiration": "2026-09-28T13:00:33.125176"
    },
    {
       "id": 1002,
