@@ -42,10 +42,8 @@ def productFilter(filters, products, categories):
     return [{k: v for k, v in filterResult.items() if k != "is_deleted"} for filterResult in filterResults], 200
 
 def saveProductData(data, products):
-    productId = 1
+    productId = len(products)+1
     userId = g.get('userId')
-    if products:
-        productId = len(products)+1
     data = {
         "id":productId,
         **data,

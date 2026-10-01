@@ -38,10 +38,7 @@ def categoryFilter(filters, categories, products):
 
 def saveCategoryData(data, categories):
     userId = g.get('userId')
-    if categories:
-        categoryId = len(categories)+1
-    else:
-        categoryId = 1
+    categoryId = len(categories) + 1
     data = {
         "id":categoryId,
         **data,

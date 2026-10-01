@@ -2,11 +2,8 @@ import json
 ACCOUNTS_PATH = 'data/accounts.json'
 
 def saveAccount(data, accounts):
-    if accounts:
-        accountId = len(accounts)+1001
-    else:
-        accountId = 1001
-
+    accountId = len(accounts)+1001
+    
     accountData = {
         "id":accountId,
         "username":data["username"],

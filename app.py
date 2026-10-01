@@ -21,11 +21,10 @@ except(json.JSONDecodeError):
 ### CHANGE LATER
 @app.before_request
 def check_user():
-    token = request.headers.get('Token')
     if request.endpoint in ["login", "register"]:
         return
 
-    token = request.headers.get("Token")
+    token = request.headers.get("x-token")
 
     g.is_admin = False
     g.userId = None

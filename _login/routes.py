@@ -21,5 +21,5 @@ def login():
     if error:
         return error
 
-    return generateToken(userId=userId, accounts=accounts)
-    
+    token, expiration = generateToken(userId=userId, accounts=accounts)
+    return saveToken(userId=userId, token=token, expiration=expiration, accounts=accounts)
