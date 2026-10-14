@@ -1,91 +1,124 @@
-import json
 from flask import g
+import mysql.connector as mysql
+from datetime import datetime
 
-PRODUCTS_PATH = 'data/products.json'
-
-def productFilter(filters, products, categories):
+def productFilter(filters):
+    isAdmin = g.get('isAdmin')
     userId = g.get('userId')
-    is_admin = g.get('is_admin')
-    filterResults = []  
-    if not all(filter_ in ["title", "description", "id", "price", "categoryId", "imageId"] for filter_ in filters):
-                return "Wrong filter keys", 400
+    cnx = mysql.connect(**g.get('databaseConfig'))
+    cursor = cnx.cursor()
+
+    usedFilters = []
+    values = []
+
+    for key, value in filters.items():
+        usedFilters.append(f"{key} = %s")
+        values.append(value)
+
+    query = "SELECT * FROM products WHERE isDeleted = 0"
+    if usedFilters:
+        query += " AND " + " AND ".join(usedFilters)
+    if not isAdmin:
+        query += " AND createdBy = %s"
+        values.append(userId)
+    cursor.execute(query, values)
+
+    dummy = cursor.fetchall()
+
+    result = []
+    for row in dummy:
+        product = {
+            "id": row[0],
+            "title": row[1],
+            "description": row[2],
+            "price": row[3],
+            "categoryId": row[4],
+            "imageId": row[5],
+            "createdBy": row[7],
+            "createdAt": row[8].isoformat(),
+            "updatedAt": row[9].isoformat() if row[9] else None
+        }
+        result.append(product)
+    cursor.close()
+    cnx.close()
     
-    for product in products:
-        if product["is_deleted"]:
-            continue
+    return result
 
-        if not is_admin and product.get("created_by") != userId:
-            continue
-        
-        if "title" in filters and filters["title"].lower() not in product["title"].lower():
-            continue
 
-        if "description" in filters and filters["description"].lower() not in product["description"].lower():
-            continue
-
-        if "id" in filters and int(filters["id"]) != int(product["id"]):
-            continue    
-
-        if "price" in filters and float(filters["price"]) != float(product["price"]):
-            continue
-
-        if "categoryId" in filters and int(filters["categoryId"]) != int(product["categoryId"]):
-            continue
-
-        if "imageId" in filters and int(filters["imageId"]) != int(product["imageId"]):
-            continue
-
-        categoryName = categories[int(product.get("categoryId"))-1].get("title")
-        product["categoryName"] = categoryName
-        
-        filterResults.append(product)
-    return [{k: v for k, v in filterResult.items() if k != "is_deleted"} for filterResult in filterResults], 200
-
-def saveProductData(data, products):
-    productId = len(products)+1
+def saveProductData(data):
     userId = g.get('userId')
-    data = {
-        "id":productId,
-        **data,
-        "is_deleted":False,
-        "created_by": userId
-    }
-    products.append(data)
-    with open(PRODUCTS_PATH, 'w') as file:
-        json.dump(products, file, indent=3)
 
-    return products
+    cnx = mysql.connect(**g.get('databaseConfig'))
+    cursor = cnx.cursor()
 
+    query = """INSERT INTO products (title, description, price, categoryId, imageId, isDeleted, createdBy, createdAt, updatedAt)
+    values (%s, %s, %s, %s, %s, %s, %s, %s, %s)"""
 
-def updateProductData(products, data):
+    values = [data["title"], data["description"], data["price"], data["categoryId"], data["imageId"], False, userId, datetime.now(), None]
+    cursor.execute(query, values)
+
+    cnx.commit()
+    cursor.close()
+    cnx.close()
+
+    return {"Result": "Data received"}, 200
+    
+    
+
+def updateProductData(data):
     productId = data.get("id")
     userId = g.get('userId')
-    is_admin = g.get('is_admin')
-    for product in products:
-            if product["id"] == productId and not product["is_deleted"]:
-                if not is_admin and product.get("created_by") != userId:
-                    return {"error": "You are not authorized to update this product"}, 403
-                for key, value in data.items():
-                    product[key] = value
-                with open(PRODUCTS_PATH, 'w') as file:
-                    json.dump(products, file, indent=3)
-                return {"Result": "Product updated",
-                        "Products":[{k: v for k, v in product.items() if k != "is_deleted"} for product in products if not product.get("is_deleted", False)]}, 200
-    return {"error": "Product not found"}, 404
+    isAdmin = g.get('isAdmin')
+
+    cnx = mysql.connect(**g.get('databaseConfig'))
+    cursor = cnx.cursor()
+
+    query = "SELECT createdBy FROM products WHERE id = %s AND isDeleted = 0"
+    cursor.execute(query, [productId])
+    result = cursor.fetchone()
+    
+    if not result or (not isAdmin and result[0] != userId):
+        cursor.close()
+        cnx.close()
+        return {"error": "Product not found"}, 404
+
+    updateFields = ["updatedAt = %s"]
+    values = [datetime.now()]
+
+    for key in data:
+        updateFields.append(f"{key} = %s")
+        values.append(data[key])
+
+    query = "UPDATE products SET " + ", ".join(updateFields) + " WHERE id = %s"
+    cursor.execute(query, values + [productId])
+
+    cnx.commit()
+    cursor.close()
+    cnx.close()
+
+    return {"Result": "Data updated"}, 200
 
 
-def deleteProductData(data, products):
+def deleteProductData(data):
     userId = g.get('userId')
-    is_admin = g.get('is_admin')
+    isAdmin = g.get('isAdmin')
     productId = data["id"]
-    for product in products:
-        if product["id"] == productId and not product["is_deleted"]:
-            if not is_admin and product.get("created_by") != userId:
-                return {"error": "You are not authorized to delete this product"}, 403
-            product["is_deleted"] = True
-            with open(PRODUCTS_PATH, 'w') as file:
-                json.dump(products, file, indent=3)
-            return {"Result": "Product deleted",
-                    "Products":[{k: v for k, v in product.items() if k != "is_deleted"} for product in products if not product.get("is_deleted", False)]}, 200
 
-    return {"error": "Product not found"}, 404
+    cnx = mysql.connect(**g.get('databaseConfig'))
+    cursor = cnx.cursor()
+
+    query = "SELECT createdBy, isDeleted FROM products WHERE id = %s AND isDeleted = 0"
+    cursor.execute(query, [productId])
+    result = cursor.fetchone()
+
+    if not result or (not isAdmin and result[0] != userId) or result[1]:
+        cursor.close()
+        cnx.close()
+        return {"error": "Product not found"}, 404
+
+    query = "UPDATE products SET isDeleted = 1 WHERE id = %s"
+    cursor.execute(query, [productId])
+
+    cnx.commit()
+    cursor.close()
+    cnx.close()

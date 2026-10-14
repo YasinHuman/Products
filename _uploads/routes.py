@@ -1,36 +1,22 @@
 from flask import Blueprint, request
+from ..validators import *
 from .methods import *
 import json
 from .validators import *
 
 uploads_bp = Blueprint("uploads", __name__)
 
-UPLOADS_IMAGE_PATH = "images"
-UPLOADS_DATA_PATH = "data/uploads.json"
-try:
-    with open(UPLOADS_DATA_PATH, 'r') as file:
-        uploadsData = json.load(file)
-except(FileNotFoundError, json.JSONDecodeError):
-    uploadsData = []
-
 @uploads_bp.route('/', methods=["POST"])
 def createUpload():
-    global uploadsData
     file = request.files.get("file")
-    error = None
     
     error = checkFile(file, file.filename)
     if error:
         return error
     
-    data = assignData(file.filename, uploadsData)
+    codename = assignAndSaveData(file.filename)
     
-    error = saveFile(data=data, file=file, uploads=uploadsData)
-    if error:
-        return error
-    
-    
-    return "File has been saved"
+    return saveFile(codename=codename, file=file)
 
 @uploads_bp.route('/', methods=["GET"])
 def readUpload():
@@ -38,25 +24,23 @@ def readUpload():
 
 @uploads_bp.route('/', methods=["PUT"])
 def updateUpload():
-    global uploadsData
-    file = request.files.get("file")
-    data = request.get_json()["changes"]
-    error = None
-
-    error = checkFile(file, file.filename)
+    data = request.get_json(silent=True)
+    
+    error = checkFile(file=None, filename=data.get("filename"), isPutOrRead=True)
     if error:
         return error
 
-    changeData(data=data, uploads=uploadsData)
-
-    return "Data changed", 200
+    return changeData(data=data)
     
 
 
 @uploads_bp.route('/', methods=["DELETE"])
 def deleteUpload():
-    global uploadsData
-    data = request.get_json()["changes"]
-    deleteFile(data=data, uploads=uploadsData)
+    data = request.get_json()
 
-    return "File has been deleted", 200
+    error = checkDeleteParams(data=data)
+    error = checkProductsForDelete(data=data, categoryOrImage="image")
+    if error:
+        return error
+
+    return deleteFile(data=data)

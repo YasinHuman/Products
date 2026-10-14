@@ -1,22 +1,16 @@
-import json
-ACCOUNTS_PATH = 'data/accounts.json'
+import mysql.connector as mysql
+from flask import g
 
-def saveAccount(data, accounts):
-    accountId = len(accounts)+1001
-    
-    accountData = {
-        "id":accountId,
-        "username":data["username"],
-        "full name":data["full name"],
-        "password":data["password"],
-        "is_deleted":False,
-        "is_admin":False,
-        "token":None,
-        "token_expiration":None 
-    }
-    accounts.append(accountData)
-    with open(ACCOUNTS_PATH, 'w') as file:
-            json.dump(accounts, file, indent=3)
-            
-    return {"message": "account created successfully"}, 201
+def saveAccount(data):
+    cnx = mysql.connect(**g.get('databaseConfig'))
+    cursor = cnx.cursor()
+
+    query = "INSERT INTO accounts (username, fullName, password) VALUES (%s, %s, %s)"
+    values = (data["username"], data["full name"], data["password"])
+    cursor.execute(query, values)
+    cnx.commit()
+    cursor.close()
+    cnx.close()
+
+    return {"Success": "account created successfully"}, 201
         

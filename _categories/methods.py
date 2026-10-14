@@ -1,93 +1,134 @@
+from datetime import datetime
 import json
 from .validators import checkProductsForDelete
 from flask import g
+import mysql.connector as mysql
 
-CATEGORIES_PATH = 'data/categories.json'
 
-def categoryFilter(filters, categories, products):
+def categoryFilter(filters):
     userId = g.get('userId')
-    is_admin = g.get('is_admin')
-    filterResults = []
-    if not all(filter_ in ["title", "description", "id"] for filter_ in filters):
-                return {"error": "Wrong filter keys"}, 400
+    isAdmin = g.get('isAdmin')
+    cnx = mysql.connect(**g.get('databaseConfig'))
+    cursor = cnx.cursor()
+
+    usedFilters = []
+    values = []
     
-    for category in categories:
-        if category["is_deleted"]:
-            continue
+    for key, value in filters.items():
+        usedFilters.append(f"{key} = %s")
+        values.append(value)
 
-        if not is_admin and category.get("created_by") != userId:
-            continue
+    query = "SELECT * FROM categories WHERE isDeleted = 0"
+    if usedFilters:
+        query += " AND " + " AND ".join(usedFilters)
+    if not isAdmin:
+        query += " AND createdBy = %s"
+        values.append(userId)
+    cursor.execute(query, values)
 
-        if "title" in filters and filters["title"].lower() not in category["title"].lower():
-            continue
+    dummy = cursor.fetchall()
 
-        if "description" in filters and filters["description"].lower() not in category["description"].lower():
-            continue
+    result = []
+    for row in dummy:
+        category = {
+            "id": row[0],
+            "title": row[1],
+            "description": row[2],
+            "imageId": row[3],
+            "isDeleted": row[4],
+            "createdBy": row[5],
+            "createdAt": row[6].isoformat(),
+            "updatedAt": row[7].isoformat() if row[7] else None
+        }
+        result.append(category)
+    cursor.close()
+    cnx.close()
+    
 
-        if "id" in filters and int(filters["id"]) != int(category["id"]):
-            continue
 
-        childProducts = []
-        for product in products:
-            if int(product.get("categoryId")) == category.get('id') and not product.get("is_deleted"):
-                childProducts.append({k: v for k, v in product.items() if k not in ["is_deleted", "categoryId"]})
-        category["products"] = childProducts
-
-        filterResults.append(category)        
-    return [{k: v for k, v in filterResult.items() if k != "is_deleted"} for filterResult in filterResults], 200
-
-def saveCategoryData(data, categories):
+def saveCategoryData(data):
     userId = g.get('userId')
-    categoryId = len(categories) + 1
-    data = {
-        "id":categoryId,
-        **data,
-        "is_deleted":False,
-        "created_by":userId
-    }
 
-    categories.append(data)
-    with open(CATEGORIES_PATH, 'w') as file:
-        json.dump(categories, file, indent=3)
+    cnx = mysql.connect(**g.get('databaseConfig'))
+    cursor = cnx.cursor()
 
-    return categories
+    query = """INSERT INTO categories (title, description, imageId, isDeleted, createdBy, createdAt, updatedAt)
+    values (%s, %s, %s, %s, %s, %s, %s)"""
 
-def updateCategoryData(data, categories):
+    values = [data["title"], data["description"], data["imageId"], False, userId, datetime.now(), None]
+    cursor.execute(query, values)
+
+    cnx.commit()
+    cursor.close()
+    cnx.close()
+
+    return {"Result": "Data saved"}, 201
+
+def updateCategoryData(data):
     categoryId = data.get("id")
     userId = g.get('userId')
-    is_admin = g.get('is_admin')
+    isAdmin = g.get('isAdmin')
 
-    for category in categories:
-        if category["id"] == categoryId and not category["is_deleted"]:
-            if not is_admin and category.get("created_by") != userId:
-                return {"error": "Permission denied"}, 403
-            for key, value in data.items():
-                if key in ["title", "description"]:
-                    category[key] = value
-            with open(CATEGORIES_PATH, 'w') as file:
-                json.dump(categories, file, indent=3)
-            return {"Result": "Category updated",
-                    "Categories":[{k: v for k, v in category.items() if k != "is_deleted"} for category in categories if not category.get("is_deleted", False)]}, 200
+    cnx = mysql.connect(**g.get('databaseConfig'))
+    cursor = cnx.cursor()
 
-    return {"error": "Category not found"}, 404
+    query = "SELECT createdBy FROM categories WHERE id = %s AND isDeleted = 0"
+    cursor.execute(query, [categoryId])
+    result = cursor.fetchone()
 
-def deleteCategoryData(data, products, categories):
+    if not result or (not isAdmin and result[0] != userId):
+        cursor.close()
+        cnx.close()
+        return {"error": "Category not found"}, 404
+
+    updateFields = ["updatedAt = %s"]
+    values = [datetime.now()]
+
+    for key in data:
+        updateFields.append(f"{key} = %s")
+        values.append(data[key])
+
+    query = "UPDATE categories SET " + ", ".join(updateFields) + " WHERE id = %s"
+    cursor.execute(query, values + [categoryId])
+
+    cnx.commit()
+    cursor.close()
+    cnx.close()
+
+    return {"Result": "Data updated"}, 200
+
+def deleteCategoryData(data):
+    categoryId = data.get("id")
     userId = g.get('userId')
-    is_admin = g.get('is_admin')
-    categoryId = data["id"]
-    
+    isAdmin = g.get('isAdmin')
+
+    cnx = mysql.connect(**g.get('databaseConfig'))
+    cursor = cnx.cursor()
+
+    query = "SELECT createdBy FROM categories WHERE id = %s AND isDeleted = 0"
+    cursor.execute(query, [categoryId])
+    result = cursor.fetchone()
+
+    if not result or (not isAdmin and result[0] != userId):
+        cursor.close()
+        cnx.close()
+        return {"error": "Category not found"}, 404
+
+    query = "SELECT id, categoryId, isDeleted FROM products WHERE categoryId = %s"
+    cursor.execute(query, [categoryId])
+    products = cursor.fetchall()
+
     error = checkProductsForDelete(categoryId, products)
     if error:
+        cursor.close()
+        cnx.close()
         return error
 
-    for category in categories:
-        if category["id"] == categoryId and not category["is_deleted"]:
-            if not is_admin and category.get("created_by") != userId:
-                return {"error": "Permission denied"}, 403
-            category["is_deleted"] = True
-            with open(CATEGORIES_PATH, 'w') as file:
-                json.dump(categories, file, indent=3)
-            return {"Result": "Category deleted",
-                    "Categories":[{k: v for k, v in category.items() if k != "is_deleted"} for category in categories if not category.get("is_deleted", False)]}, 200
+    query = "UPDATE categories SET isDeleted = 1, updatedAt = %s WHERE id = %s"
+    cursor.execute(query, [datetime.now(), categoryId])
 
-    return {"error": "Category not found"}, 404
+    cnx.commit()
+    cursor.close()
+    cnx.close()
+
+    return {"Result": "Category deleted"}, 200

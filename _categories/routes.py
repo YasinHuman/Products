@@ -1,63 +1,44 @@
-from flask import Blueprint, request, current_app
+from flask import Blueprint, request
 from .methods import *
 from .validators import *
 import json
+from ..validators import *
+import mysql.connector as mysql
 
 categories_bp = Blueprint("categories", __name__)
 
-CATEGORIES_PATH = 'data/categories.json'
-PRODUCTS_PATH = 'data/products.json'
-
-try:
-    with open(CATEGORIES_PATH, 'r') as file:
-        categories = json.load(file)
-except(json.JSONDecodeError):
-    categories = []
-
-try:
-    with open(PRODUCTS_PATH, 'r') as file:
-        products = json.load(file)
-except(json.JSONDecodeError):
-    products = []
-
-
 @categories_bp.route('/', methods=["POST"])
 def createCategory():
-    global categories
     data = request.get_json(silent=True)
-    error = None
     
-    error = checkCategoryParams(data, False)
+    error = checkCategoryParams(data=data, isPutOrRead=False)
     if error:
         return error
 
-    categories = saveCategoryData(data=data, categories=categories)
-
-    return {"Result": "Data received",
-            "Categories":[{k: v for k, v in category.items() if k != "is_deleted"} for category in categories if not category.get("is_deleted", False)]}, 200
-   
+    return saveCategoryData(data=data)
 
 @categories_bp.route('/', methods=["GET"])
 def readCategory():
     categoryFilters = request.get_json(silent=True)
-    
-    if type(categoryFilters) != dict:
-            return {"error": "Filters should be a dictionary"}, 400
 
-    return categoryFilter(filters=categoryFilters, categories=categories, products=products)
+    error = checkCategoryParams(categoryFilters, isPutOrRead=True)
+    if error:
+        return error
+
+    return categoryFilter(filters=categoryFilters)
 
 
 @categories_bp.route('/', methods=["PUT"])
 def updateCategory():
     global categories
     data = request.get_json(silent=True)
-    error = None
 
-    error = checkCategoryParams(data=data, isPut=True)
+    error = checkCategoryParams(data=data, isPutOrRead=True)
+    error = checkForImage(data=data)
     if error:
         return error
 
-    return updateCategoryData(data=data, categories=categories)
+    return updateCategoryData(data=data)
     
 
 @categories_bp.route('/', methods=["DELETE"])
@@ -65,12 +46,14 @@ def deleteCategory():
     global categories
     data = request.get_json(silent=True)
 
-    if type(data) != dict or "id" not in data:
-        return "Category ID is required for deletion", 400
+    error = checkDeleteParams(data=data)
+    error = checkProductsForDelete(data=data, categoryOrImage="category")
+    if error:
+        return error
 
-    return deleteCategoryData(data=data, categories=categories, products=products)
+    return deleteCategoryData(data=data)
 
 
 @categories_bp.route('/<int:id>')
 def getCategoryById(id):
-    return categoryFilter(filters={"id":id}, categories=categories, products=products)
+    return categoryFilter(filters={"id":id})

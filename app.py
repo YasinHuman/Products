@@ -1,47 +1,54 @@
-from flask import Flask, json, request, g
+from flask import Flask, request, g
 from _categories.routes import categories_bp
 from _products.routes import products_bp
 from _uploads.routes import uploads_bp
 from _login.routes import login_bp
 from _register.routes import register_bp
-from datetime import datetime, timedelta
+from datetime import datetime
+import mysql.connector as mysql
 
 app = Flask(__name__)
 
 app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024  
-ACCOUNTS_PATH = 'data/accounts.json'
-
-try:
-    with open(ACCOUNTS_PATH, 'r') as file:
-        accounts = json.load(file)
-except(json.JSONDecodeError):
-    accounts = []
 
 
-### CHANGE LATER
 @app.before_request
-def check_user():
+def checkUser():
+    g.databaseConfig = {
+    'host': 'localhost',
+    'user': 'root',
+    'password': "!E12DB3b00h@",
+    'database': 'ecommerce'
+}
     if request.endpoint in ["login", "register"]:
         return
 
     token = request.headers.get("x-token")
 
-    g.is_admin = False
-    g.userId = None
+    cnx = mysql.connect(**g.get('databaseConfig'))
+    cursor = cnx.cursor(dictionary=True)
+    cursor.execute("SELECT id, token, tokenExpiration, isAdmin FROM accounts")
+    accounts = cursor.fetchall()
 
     for account in accounts:
         if account.get("token") == token:
-            expiration = account.get("token_expiration")
+            expiration = account.get("tokenExpiration")
 
             if expiration:
-                token_expiration = datetime.fromisoformat(expiration)
+                tokenExpiration = datetime.fromisoformat(expiration)
 
-                if datetime.utcnow() < token_expiration:
-                    g.is_admin = account.get("is_admin", False)
+                if datetime.now() < tokenExpiration:
+                    g.isAdmin = account.get("isAdmin", False)
                     g.userId = account.get("id")
+                    
+                    cursor.close()
+                    cnx.close()
+                    return
 
-            return
-###
+    cursor.close()
+    cnx.close()
+    return {"error": "Unauthorized"}, 401
+
 
 
 app.register_blueprint(
